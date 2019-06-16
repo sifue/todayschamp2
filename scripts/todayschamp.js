@@ -17,24 +17,37 @@
 //     });
 // console.log(messages.join('\n'));
 'use strict';
-module.exports = (robot) => {
-    robot.hear(/(.+)/i, (msg) => {
-        let username = null;
-        if (msg.message.user.profile) {
-            username = msg.message.user.profile.display_name;
-        }
-        if (msg.message.user.display_name) {
-            username = msg.message.user.display_name;
-        }
-        if (!username) {
-            username = msg.message.user.name;
-        }
-        let text = run(username, msg.match[1]);
-        msg.send(text);
-    });
-};
 
-let all_list = [
+module.exports = (robot) => {
+
+    robot.hear(/^今日のチャンプ/, (msg) => {
+      let username = getUsername(msg);
+      msg.send(createRandomChampMessage(username));
+    });
+  
+    robot.hear(/^ロール決めて (.*)/, (msg) => {;
+      const parsed = msg.match[1];
+      const summoners = shuffle(parsed.split(' '));
+      msg.send(decideRole(summoners));
+    });
+  
+  };
+
+function getUsername(msg) {
+    let username = null;
+    if (msg.message.user.profile) {
+        username = msg.message.user.profile.display_name;
+    }
+    if (msg.message.user.display_name) {
+        username = msg.message.user.display_name;
+    }
+    if (!username) {
+        username = msg.message.user.name;
+    }
+    return username;
+}
+
+const allChampList = [
     'アイバーン https://ddragon.leagueoflegends.com/cdn/9.10.1/img/champion/Ivern.png',
     'アカリ https://ddragon.leagueoflegends.com/cdn/9.10.1/img/champion/Akali.png',
     'アジール https://ddragon.leagueoflegends.com/cdn/9.10.1/img/champion/Azir.png',
@@ -181,9 +194,9 @@ let all_list = [
     'ヴェル＝コズ https://ddragon.leagueoflegends.com/cdn/9.10.1/img/champion/Velkoz.png'
 ];
 
-function getRandom(l, name) {
-    let i = l[Math.floor(Math.random() * l.length)];
-    return name + '、こいつ使えよ ' + i;
+function createRandomChampMessage(username) {
+    const champAndImage = allChampList[Math.floor(Math.random() * allChampList.length)];
+    return username + '、これつかったらどうかな ' + champAndImage;
 }
 
 function shuffle(list) {
@@ -207,23 +220,13 @@ function decideRole(summoners) {
 
     let shuffled = shuffle(summoners);
     let output = '';
-    output += 'Top: ' + shuffled[0];
-    output += ', Jg: ' + shuffled[1];
-    output += ', Mid: ' + shuffled[2];
-    output += ', Sup: ' + shuffled[3];
-    output += ', ADC: ' + shuffled[4];
+    output += 'TOP: ' + shuffled[0];
+    output += ', JUNGLE: ' + shuffled[1];
+    output += ', MID: ' + shuffled[2];
+    output += ', BOTTOM: ' + shuffled[3];
+    output += ', SUPPORT: ' + shuffled[4];
     if (shuffled.length > 5) {
         output += ', 補欠: ' + shuffled.slice(5).join(' ');
     }
     return output;
-}
-
-function run(name, text) {
-    if (text.indexOf('今日のチャンプ') === 0) {
-        return getRandom(all_list, name);
-    } else if (text.indexOf('ロール決めて') === 0) {
-        let summoners = text.split(/\s+/).slice(1);
-        return decideRole(summoners);
-    }
-    return '';
 }
